@@ -92,28 +92,6 @@ src/
 - Firebase 프로젝트
 - YouTube Data API v3 키
 
-### 설치
-
-```bash
-git clone https://github.com/your-username/song-quiz.git
-cd song-quiz
-npm install
-```
-
-### 환경 변수 설정
-
-`.env.local` 파일을 생성하고 아래 내용을 입력하세요.
-
-```env
-NEXT_PUBLIC_YOUTUBE_API_KEY=your_youtube_api_key
-
-NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-```
 
 ### 개발 서버 실행
 
@@ -121,7 +99,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 npm run dev
 ```
 
-브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
+브라우저에서 [http://localhost:3000](http://localhost:3000) (추후 변경 예정)접속
 
 ---
 
@@ -155,12 +133,6 @@ songs/
 ## 🌐 배포
 
 Vercel을 통해 배포합니다.
-
-```bash
-npm run build
-```
-
-Vercel 대시보드에서 환경 변수를 동일하게 설정해주세요.
 
 ---
 
