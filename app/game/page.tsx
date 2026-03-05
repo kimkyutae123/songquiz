@@ -30,8 +30,11 @@ function GamePage() {
 
     useEffect(() => {
         const loadSongs = async () => {
+            console.log('Firebase 프로젝트 ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+            console.log('장르:', genre, '카운트:', songCount);
             const count = Number(songCount);
             const allSongs = await getSongsByGenre(genre);
+            console.log('가져온 노래 수:', allSongs.length);
             const shuffled = shuffleArray(allSongs);
             const songs = shuffled.slice(0, count);
             setGameState(prev => ({ ...prev, songs }));
