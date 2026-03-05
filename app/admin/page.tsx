@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { addSong } from '@/lib/firebase';
 import { Genre } from '@/types';
 
@@ -9,8 +9,7 @@ interface YoutubeVideoInfo {
     artist: string;
     youtubeId: string;
     startTime: number;
-    answers: string;  // 쉼표로 구분
-
+    answers: string;
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
@@ -35,11 +34,10 @@ const fetchVideoInfo = async (youtubeId: string): Promise<YoutubeVideoInfo | nul
         youtubeId,
         startTime: 0,
         answers: '',
-
     };
 };
 
-export default function AdminPage() {
+function AdminPage() {
     const [url, setUrl] = useState('');
     const [genre, setGenre] = useState<Genre>('kpop');
     const [preview, setPreview] = useState<YoutubeVideoInfo | null>(null);
@@ -71,7 +69,6 @@ export default function AdminPage() {
             genre,
             startTime: preview.startTime,
             answers: preview.answers.split(',').map(a => a.trim()).filter(Boolean),
-
         });
 
         setMessage('✅ 저장됐어요!');
@@ -86,8 +83,6 @@ export default function AdminPage() {
                 <h1 className="text-3xl font-black text-gray-800 mb-8">🎵 노래 관리자</h1>
 
                 <div className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4">
-
-                    {/* URL 입력 */}
                     <div>
                         <label className="font-bold text-gray-700 mb-2 block">유튜브 URL</label>
                         <input
@@ -106,16 +101,12 @@ export default function AdminPage() {
                     {preview && (
                         <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-3">
                             <p className="text-sm text-gray-500">미리보기</p>
-
-                            {/* 시작 시간 적용된 영상 미리보기 */}
                             <iframe
                                 width="100%"
                                 height="200"
                                 src={`https://www.youtube.com/embed/${preview.youtubeId}?start=${preview.startTime}`}
                                 className="rounded-xl"
                             />
-
-                            {/* 제목 */}
                             <div>
                                 <label className="text-sm font-bold text-gray-600">제목</label>
                                 <input
@@ -125,8 +116,6 @@ export default function AdminPage() {
                                     className="w-full border border-gray-200 rounded-lg px-3 py-2 mt-1 text-sm outline-none focus:border-pink-400"
                                 />
                             </div>
-
-                            {/* 가수 */}
                             <div>
                                 <label className="text-sm font-bold text-gray-600">가수</label>
                                 <input
@@ -137,9 +126,7 @@ export default function AdminPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-bold text-gray-600">
-                                    추가 정답 (쉼표로 구분)
-                                </label>
+                                <label className="text-sm font-bold text-gray-600">추가 정답 (쉼표로 구분)</label>
                                 <input
                                     type="text"
                                     value={preview.answers}
@@ -148,11 +135,8 @@ export default function AdminPage() {
                                     className="w-full border border-gray-200 rounded-lg px-3 py-2 mt-1 text-sm outline-none focus:border-pink-400"
                                 />
                             </div>
-                            {/* 시작 시간 */}
                             <div>
-                                <label className="text-sm font-bold text-gray-600">
-                                    시작 시간 (초) — 인트로 건너뛰기
-                                </label>
+                                <label className="text-sm font-bold text-gray-600">시작 시간 (초) — 인트로 건너뛰기</label>
                                 <div className="flex gap-2 items-center mt-1">
                                     <input
                                         type="number"
@@ -162,7 +146,6 @@ export default function AdminPage() {
                                         className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-400"
                                     />
                                     <span className="text-sm text-gray-400">초부터 시작</span>
-                                    {/* 빠른 선택 버튼 */}
                                     {[0, 15, 30, 45, 60].map((sec) => (
                                         <button
                                             key={sec}
@@ -181,7 +164,6 @@ export default function AdminPage() {
                         </div>
                     )}
 
-                    {/* 장르 선택 */}
                     <div>
                         <label className="font-bold text-gray-700 mb-2 block">장르</label>
                         <div className="grid grid-cols-4 gap-2">
@@ -215,5 +197,17 @@ export default function AdminPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function AdminPageWrapper() {
+    return (
+        <Suspense fallback={
+            <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <p className="text-pink-400 font-semibold animate-pulse">로딩 중...</p>
+            </main>
+        }>
+            <AdminPage />
+        </Suspense>
     );
 }

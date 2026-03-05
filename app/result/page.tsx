@@ -1,8 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function ResultPage() {
+function ResultPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -25,5 +26,17 @@ export default function ResultPage() {
                 </button>
             </div>
         </main>
+    );
+}
+
+export default function ResultPageWrapper() {
+    return (
+        <Suspense fallback={
+            <main className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 flex items-center justify-center">
+                <p className="text-2xl font-bold text-pink-400 animate-pulse">🎵 로딩 중...</p>
+            </main>
+        }>
+            <ResultPage />
+        </Suspense>
     );
 }
