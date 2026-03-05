@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';  // ← 이거 추가
 
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
