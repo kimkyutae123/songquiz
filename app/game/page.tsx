@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Song, GameState, Genre, ListenMode, FirebaseSong } from '@/types';
 import { LISTEN_MODE_DURATION, shuffleArray } from '@/lib/youtube';
@@ -28,6 +28,9 @@ function GamePage() {
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     const [isPlaying, setIsPlaying] = useState(true);
 
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const isTimerStarted = useRef(false);
+
     useEffect(() => {
         const loadSongs = async () => {
             console.log('Firebase 프로젝트 ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
@@ -47,25 +50,49 @@ function GamePage() {
     const duration = LISTEN_MODE_DURATION[listenMode];
     const startTime = (currentSong as FirebaseSong)?.startTime ?? 0;
 
+    // 타이머 설정
+    useEffect(() => {
+        if (!currentSong || gameState.isAnswered) return;
+        if (isTimerStarted.current) return;
+
+        if (duration === null) return;
+
+        isTimerStarted.current = true;
+
+        timerRef.current = setTimeout(() => {
+            setIsPlaying(false);
+        }, duration * 1000);
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            isTimerStarted.current = false;
+        };
+    }, [currentSong?.youtubeId]);
+
     const iframeSrc = useMemo(() => {
         if (!currentSong) return null;
-        const endTime = duration !== null ? `&end=${startTime + duration}` : '';
-        return `https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&controls=1&start=${startTime}${endTime}`;
+        return `https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&controls=1&start=${startTime}`;
     }, [iframeKey, currentSong?.youtubeId]);
 
     const handleSubmit = () => {
         if (!currentSong || gameState.isAnswered) return;
 
-        const userAnswer = answer.trim().toLowerCase();
+        const clean = (str: string) => str
+            .toLowerCase()
+            .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣぁ-んァ-ン]/g, '')
+            .replace(/\s/g, '');
+
+        const userAnswer = clean(answer);
         if (userAnswer === '') return;
 
-        const correctAnswer = currentSong.title.trim().toLowerCase();
+        const correctAnswer = clean(currentSong.title);
         const extraAnswers = ((currentSong as FirebaseSong).answers ?? [])
-            .map(a => a.toLowerCase());
+            .map(a => clean(a));
 
         const allAnswers = [correctAnswer, ...extraAnswers];
         const correct = allAnswers.some(ans => ans === userAnswer);
 
+        if (timerRef.current) clearTimeout(timerRef.current);
         setIsPlaying(false);
         setIsCorrect(correct);
         setGameState(prev => ({
@@ -85,6 +112,9 @@ function GamePage() {
 
     const handleNext = () => {
         const isLastSong = gameState.currentIndex === gameState.songs.length - 1;
+
+        if (timerRef.current) clearTimeout(timerRef.current);
+        isTimerStarted.current = false;
 
         if (isLastSong) {
             router.push(`/result?score=${gameState.score}&total=${gameState.songs.length}`);
@@ -117,12 +147,18 @@ function GamePage() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 flex flex-col items-center justify-center p-8">
             <div className="w-full max-w-xl flex justify-between items-center mb-6">
-                <span className="font-bold text-gray-600">
+                <span className="font-bold text-black-600">
                     {gameState.currentIndex + 1} / {gameState.songs.length}
                 </span>
-                <span className="font-black text-pink-500 text-xl">
+                            <span className="font-black text-pink-500 text-xl">
                     🏆 {gameState.score}점
                 </span>
+                <button
+                    onClick={() => router.push('/')}
+                    className="text-black-400 hover:text-gray-600 font-semibold text-sm transition-all"
+                >
+                    ✕ 나가기
+                </button>
             </div>
 
             <div className="relative w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl mb-6">
