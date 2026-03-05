@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef ,useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Song, GameState, Genre, ListenMode, FirebaseSong } from '@/types';
 import { LISTEN_MODE_DURATION, shuffleArray } from '@/lib/youtube';
 import { getSongsByGenre } from '@/lib/firebase';
 
-export default function GamePage() {
+function GamePage() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -15,7 +15,6 @@ export default function GamePage() {
     const songCount = searchParams.get('songCount');
 
     const [iframeKey, setIframeKey] = useState(0);
-
     const [gameState, setGameState] = useState<GameState>({
         currentIndex: 0,
         score: 0,
@@ -41,20 +40,14 @@ export default function GamePage() {
         loadSongs();
     }, []);
 
-    // 노래 바뀔 때 타이머 설정
-
-
     const currentSong: Song | undefined = gameState.songs[gameState.currentIndex];
     const duration = LISTEN_MODE_DURATION[listenMode];
     const startTime = (currentSong as FirebaseSong)?.startTime ?? 0;
 
-    // iframe src 생성
     const iframeSrc = useMemo(() => {
         if (!currentSong) return null;
         const endTime = duration !== null ? `&end=${startTime + duration}` : '';
-        const src = `https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&controls=1&start=${startTime}${endTime}`;
-        console.log('iframeSrc 재계산됨:', src);
-        return src;
+        return `https://www.youtube.com/embed/${currentSong.youtubeId}?autoplay=1&controls=1&start=${startTime}${endTime}`;
     }, [iframeKey, currentSong?.youtubeId]);
 
     const handleSubmit = () => {
@@ -67,15 +60,10 @@ export default function GamePage() {
         const extraAnswers = ((currentSong as FirebaseSong).answers ?? [])
             .map(a => a.toLowerCase());
 
-        // 정답 또는 추가 정답 중 하나라도 일치하면 정답
         const allAnswers = [correctAnswer, ...extraAnswers];
         const correct = allAnswers.some(ans => ans === userAnswer);
 
-
-
-
         setIsPlaying(false);
-
         setIsCorrect(correct);
         setGameState(prev => ({
             ...prev,
@@ -100,7 +88,6 @@ export default function GamePage() {
             return;
         }
 
-        // gameState 먼저 바꾸고
         setGameState(prev => ({
             ...prev,
             currentIndex: prev.currentIndex + 1,
@@ -111,7 +98,6 @@ export default function GamePage() {
         setIsCorrect(null);
         setIsPlaying(true);
 
-        // iframeKey는 살짝 딜레이 후 올리기
         setTimeout(() => {
             setIframeKey(prev => prev + 1);
         }, 100);
@@ -127,7 +113,6 @@ export default function GamePage() {
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 flex flex-col items-center justify-center p-8">
-
             <div className="w-full max-w-xl flex justify-between items-center mb-6">
                 <span className="font-bold text-gray-600">
                     {gameState.currentIndex + 1} / {gameState.songs.length}
@@ -136,6 +121,7 @@ export default function GamePage() {
                     🏆 {gameState.score}점
                 </span>
             </div>
+
             <div className="relative w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl mb-6">
                 <div className={`transition-all duration-700 ${gameState.isBlurred ? 'blur-2xl scale-110' : 'blur-0'}`}>
                     {isPlaying && iframeSrc ? (
@@ -196,5 +182,17 @@ export default function GamePage() {
                 )}
             </div>
         </main>
+    );
+}
+
+export default function GamePageWrapper() {
+    return (
+        <Suspense fallback={
+            <main className="min-h-screen bg-gradient-to-br from-yellow-100 to-pink-100 flex items-center justify-center">
+                <p className="text-2xl font-bold text-pink-400 animate-pulse">🎵 로딩 중...</p>
+            </main>
+        }>
+            <GamePage />
+        </Suspense>
     );
 }
